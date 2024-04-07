@@ -6,7 +6,6 @@ import playerMe from "./PMe.svg";
 import playerUp from "./PUp.svg";
 import playerLeft from "./PLeft.svg";
 import playerRight from "./PRight.svg";
-import { useEffect } from "react";
 
 const CARD_TYPES = {
   HEART: "♥",
@@ -15,25 +14,24 @@ const CARD_TYPES = {
   CLUBS: "♣",
 };
 
-const Card = ({ type, valueCode, count, idx }) => {
+const Card = ({ card, type, onClick }) => {
+  let valueCode = undefined;
+  if (card) {
+    type = CARD_TYPES[card.type];
+    valueCode = card.valueCode;
+  }
   const isRed = type === CARD_TYPES.HEART || type === CARD_TYPES.DIAMOND;
   const styles = isRed ? `text-red-500` : `text-black`;
-  const cardW = () => {
-    const mid = Math.floor(count / 2);
-    if (idx < mid) return (mid - idx) * 8;
-    if (idx > mid) return (idx - mid) * -8;
-    if (idx === mid) return 0;
-  };
   return (
     <div
-      className={`h-14 w-10 bg-white text-center rounded px-1 flex flex-col align-center justify-center  ${styles} drop-shadow-2xl border border-gray-300`}
-      style={
-        {
-          // transform: `translateX(${cardW()}px)`,
+      onClick={() => {
+        if (onClick) {
+          onClick(card);
         }
-      }
+      }}
+      className={`block h-14 w-10 bg-white text-center rounded px-1 flex flex-col align-center justify-center  ${styles} drop-shadow-2xl`}
     >
-      <span className="font-bold block h-4">{valueCode}</span>
+      {valueCode && <span className="font-bold block h-4">{valueCode}</span>}
       <span className="text-2xl">{type}</span>
     </div>
   );
@@ -49,7 +47,7 @@ const ThinkingBox = () => {
 
 const ScoreBoard = () => {
   return (
-    <div className="mx-10 my-4 bg-black/50 px-2 py-2 rounded-full">
+    <div className="mx-8 my-4 bg-black/50 px-2 py-2 rounded-full">
       <div className="flex items-center">
         <span className="text-blue-500 bg-blue-500/20 rounded-full px-4 py-1 relative">
           <img
@@ -60,7 +58,7 @@ const ScoreBoard = () => {
         </span>
         <span className="text-blue-500 text-xl ml-2">{">"}</span>
         <span className="flex-1 text-center text-xl text-white py-2">
-          10 / 10
+          10/10
         </span>
         <span className="text-red-500 mr-2 text-xl"> {"<"}</span>
         <span className="text-red-500 bg-red-500/20 rounded-full px-4 py-1">
@@ -72,58 +70,48 @@ const ScoreBoard = () => {
 };
 
 const RoundDetails = ({ trumps }) => {
-  const isRed =
-    CARD_TYPES[trumps] === CARD_TYPES.HEART || trumps === CARD_TYPES.DIAMOND;
+  const isRed = trumps === "HEART" || trumps === "DIAMOND";
   const styles = isRed ? `text-red-500` : `text-black`;
-  if (!trumps) return <></>;
   return (
-    <div className="flex mx-10 items-center gap-2 py-2 bg-black/50 rounded-full px-6">
+    <div className="flex mx-8 items-center gap-2 py-2 bg-black/50 rounded-full px-6">
       <p className="text-xs text-white ">Round - 1 {">"} </p>
-      <div className="flex bg-black/50 self-center px-2 py-0 rounded-full items-center">
+      <div className="flex bg-white self-center px-2 py-0 rounded-full items-center">
         <img src={diamondIcon} className="h-5" />
-        <span className="text-[7px] ml-1 text-white">TRUMPS {">"}</span>
+        <span className="text-[7px] ml-1">TRUMPS {">"}</span>
         <span className={`${styles} text-xl mb-2 h-5 ml-2`}>
-          {CARD_TYPES[trumps]}
+          {trumps && CARD_TYPES[trumps]}
+          {!trumps && ""}
         </span>
       </div>
     </div>
   );
 };
 
-const Table = ({ cards }) => {
+const Table = ({ cards, onClose }) => {
   return (
-    <div className="w-24 h-24 absolute bottom-[18rem] left-[32%] -skew-x-[16deg]">
+    <div
+      className="w-24 h-24 absolute bottom-[16rem] left-[32%] -skew-x-[18deg] z-0"
+      onClick={() => onClose()}
+    >
       <div className="relative w-24 h-24 flex">
         {cards[0] && (
-          <div className="absolute -bottom-6 left-0">
-            <Card
-              type={CARD_TYPES[cards[0].type]}
-              valueCode={cards[0].valueCode}
-            />
+          <div className="absolute -bottom-6 left-2">
+            <Card card={cards[0]} />
           </div>
         )}
         {cards[1] && (
           <div className="absolute -bottom-2 -right-8">
-            <Card
-              type={CARD_TYPES[cards[1].type]}
-              valueCode={cards[1].valueCode}
-            />
+            <Card card={cards[1]} />
           </div>
         )}
         {cards[2] && (
-          <div className="absolute -top-6 right-0">
-            <Card
-              type={CARD_TYPES[cards[2].type]}
-              valueCode={cards[2].valueCode}
-            />
+          <div className="absolute -top-6 right-2">
+            <Card card={cards[2]} />
           </div>
         )}
         {cards[3] && (
           <div className="absolute -top-2 -left-4">
-            <Card
-              type={CARD_TYPES[cards[3].type]}
-              valueCode={cards[3].valueCode}
-            />
+            <Card card={cards[3]} />
           </div>
         )}
       </div>
@@ -134,39 +122,76 @@ const Table = ({ cards }) => {
 const Logo = () => {
   return (
     <div className="my-4 flex flex-col align-center">
-      <img src={logo} className="h-36" />
+      <img src={logo} className="h-20" />
     </div>
   );
 };
 
 const PlayerScore = ({ score }) => {
   return (
-    <p className="px-2 py-1 bg-black/50 rounded-full text-white text-sm inline-block w-18 text-center">
+    <span className="px-2 py-1 bg-black/50 rounded-full text-white text-sm inline-block w-18 text-center">
       <img src={trophyIcon} className="inline mx-2" />
       <span className="mr-1">{score}</span>
-    </p>
+    </span>
   );
 };
 
-const PlayerMe = ({ player, trumps }) => {
+const TrumpsSelectionBox = ({ onTrumpsSelected }) => {
+  return (
+    <div className="bg-black/25 p-4 rounded-2xl relative">
+      <p className="text-xs mb-2 text-white">Select Trumps ? </p>
+      <div className="flex text-xl gap-2 z-1">
+        <Card
+          type={CARD_TYPES.HEART}
+          onClick={() => onTrumpsSelected("HEART")}
+        />
+        <Card
+          type={CARD_TYPES.SPADE}
+          onClick={() => onTrumpsSelected("SPADE")}
+        />
+        <Card
+          type={CARD_TYPES.DIAMOND}
+          onClick={() => onTrumpsSelected("DIAMOND")}
+        />
+        <Card
+          type={CARD_TYPES.CLUBS}
+          onClick={() => onTrumpsSelected("CLUBS")}
+        />
+      </div>
+    </div>
+  );
+};
+
+const PlayerMe = ({
+  player,
+  isTrumpSelectionNeeded,
+  onTrumpsSelected,
+  onCardSelected,
+}) => {
   const cards = player.cards.slice(0, 8);
   return (
-    <div className="absolute bottom-[2rem] left-[2rem]">
-      <div className="flex">
-        {/* {player.isActive && (
-          <div className="absolute -top-2 left-20">
+    <div className="absolute bottom-[1rem] left-[2rem]">
+      <div className="flex relative">
+        {isTrumpSelectionNeeded && (
+          <div className="absolute -top-20 left-24">
+            <TrumpsSelectionBox
+              onTrumpsSelected={(type) => onTrumpsSelected(type)}
+            />
+          </div>
+        )}
+        {player.isActive && (
+          <div className="absolute left-20">
             <ThinkingBox />
           </div>
-        )} */}
+        )}
         <img src={playerMe} className="w-30" />
         <div className="flex self-center ml-4 mt-14 gap-1 flex-wrap-reverse w-64">
-          {cards.map((card, idx) => {
+          {cards.map((card) => {
             return (
               <Card
-                type={CARD_TYPES[card.type]}
-                valueCode={card.valueCode}
-                idx={idx}
-                count={cards.length}
+                key={`${card.type}-${card.valueCode}`}
+                card={card}
+                onClick={(card) => onCardSelected(card)}
               />
             );
           })}
@@ -184,7 +209,7 @@ const PlayerMe = ({ player, trumps }) => {
 
 const PlayerUp = ({ player }) => {
   return (
-    <div className="flex flex-col items-center absolute bottom-[26rem] right-[6rem]">
+    <div className="flex flex-col items-center absolute bottom-[24rem] right-[7rem]">
       <p className="text-white mb-2">
         LOKKA <PlayerScore score={player.points} />
         <span className="block text-[7px] text-blue-500">TEAM BLUE</span>
@@ -203,7 +228,7 @@ const PlayerUp = ({ player }) => {
 
 const PlayerLeft = ({ player }) => {
   return (
-    <div className="flex flex-col absolute bottom-[20rem] left-[1rem]">
+    <div className="flex flex-col absolute bottom-[18rem] left-[1rem]">
       <p className=" text-white">
         TIKIRA <PlayerScore score={player.points} />
         <span className="block text-[7px] text-red-500">TEAM RED</span>
@@ -235,19 +260,31 @@ const PlayerRight = ({ player }) => {
   );
 };
 
+const delay = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 500);
+  });
+};
+
 export const App = () => {
-  const { players, trumps, round } = useGameStore((state) => state.game);
-  const { callTrumps, nextMove } = useGameStore((state) => state);
+  const { players, trumps, round, gameStatus } = useGameStore(
+    (state) => state.game
+  );
+  const { callTrumps, startRound, nextMove, closeRound } = useGameStore(
+    (state) => state
+  );
 
-  if (!trumps) {
-    callTrumps();
+  if (gameStatus === "NOT_STARTED") {
+    console.log("startRound");
+    delay().then(() => startRound());
   }
-
-  useEffect(() => {
-    setInterval(() => {
-      // nextMove();
-    }, 1000);
-  }, []);
+  if (gameStatus === "STARTED") {
+    // nextMove();
+    delay().then(() => nextMove());
+  }
+  console.log(gameStatus);
 
   return (
     <main className="h-dvh bg-slate-900 flex flex-col items-center px-24 font-mono">
@@ -255,29 +292,24 @@ export const App = () => {
         className="bg-cover bg-center h-screen w-screen md:w-[596px] bg-no-repeat  relative" //md:bg-contain
         style={{ backgroundImage: "url('./bg.jpg')" }}
       >
-        <Logo />
+        {/* <Logo /> */}
         <ScoreBoard />
         <RoundDetails trumps={trumps} />
-        <PlayerMe player={players[0]} trumps={trumps} />
+        <Table cards={round.cards} onClose={() => closeRound()} />
+        <PlayerMe
+          player={players[0]}
+          isTrumpSelectionNeeded={gameStatus === "AWAIT_TRUMPS"}
+          onTrumpsSelected={(type) => {
+            console.log("Trumps Selected - ", type);
+            callTrumps(type);
+          }}
+          onCardSelected={(card) => {
+            nextMove(card);
+          }}
+        />
         <PlayerUp player={players[2]} />
         <PlayerRight player={players[1]} />
         <PlayerLeft player={players[3]} />
-        <Table cards={round.cards} />
-        {/* <div className="flex gap-2 text-sm">
-          <p>{trumps}</p>
-          <button
-            className="px-4 py-2 text-white border rounded-full"
-            onClick={() => callTrumps()}
-          >
-            Trumps
-          </button>
-          <button
-            className="px-4 py-2 text-white border rounded-full"
-            onClick={() => nextMove()}
-          >
-            Next
-          </button>
-        </div> */}
       </div>
     </main>
   );

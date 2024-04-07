@@ -17,22 +17,57 @@ export const makeNewGame = () => {
 
 const reducer = (set) => ({
   game: makeNewGame(),
-  callTrumps: () =>
+  startRound: () => {
     set((state) => {
       const nextPlayer = state.game.round.nextPlayer();
-      state.game.start(nextPlayer.decideTrumps());
-      return { ...state };
-    }),
-  nextMove: () =>
-    set((state) => {
-      if (state.game.round.hasRoundCompleted()) {
-        state.game.decideWinnerForRound();
+      if (nextPlayer.name === "Me") {
+        state.game.gameStatus = "AWAIT_TRUMPS";
         return { ...state };
       }
+      state.game.start(nextPlayer.decideTrumps());
+      state.game.gameStatus = "STARTED";
+      return { ...state };
+    });
+  },
+  callTrumps: (trumps) =>
+    set((state) => {
+      state.game.start(trumps);
+      state.game.gameStatus = "STARTED";
+      return { ...state };
+    }),
+  nextMove: (card) =>
+    set((state) => {
+      if (state.game.round.hasRoundCompleted()) {
+        state.game.gameStatus = "AWAIT_CLOSE";
+        return { ...state };
+      }
+      if (card) {
+        const nextPlayer = state.game.round.nextPlayer();
+        state.game.gameStatus = "STARTED";
+        state.game.drawCard(card);
+        nextPlayer.removeCard(card);
+        return { ...state };
+      }
+
       const nextPlayer = state.game.round.nextPlayer();
+      if (nextPlayer.name === "Me") {
+        state.game.gameStatus = "AWAIT_CARD";
+        return { ...state };
+      }
+
+      state.game.gameStatus = "STARTED";
       state.game.drawCard(nextPlayer.drawCard(state.game));
       return { ...state };
     }),
+  closeRound: () => {
+    set((state) => {
+      if (state.game.round.hasRoundCompleted()) {
+        state.game.gameStatus = "STARTED";
+        state.game.decideWinnerForRound();
+        return { ...state };
+      }
+    });
+  },
 });
 
 export const useGameStore = create(reducer);
