@@ -46,8 +46,9 @@ export const makePlayer = (name) => ({
   name,
   points: 0,
   isActive: false,
+  cards: [],
   loadCards(cards) {
-    this.cards = cards;
+    this.cards.push(...cards);
   },
   decideTrumps() {
     return selectTrumps(this.cards);
@@ -68,6 +69,9 @@ export const makePlayer = (name) => ({
   },
   addPoints() {
     this.points++;
+  },
+  removeCard(card) {
+    helpers.removeCard(this.cards, card);
   },
 });
 
@@ -115,22 +119,25 @@ export const makeRound = (players) => ({
 
 export const makeGame = (deck, players) => {
   const distributeCards = (cards) => {
-    const chucks = _.chunk(cards, 8);
+    const chucks = _.chunk(cards, 4);
     for (let i in players) {
       players[i].loadCards(chucks[i]);
     }
+    return chucks.slice(4, 8);
   };
   return {
     players,
     oldCards: [],
     trumps: undefined,
     init() {
-      distributeCards(deck.cards);
+      this.remaininigCards = distributeCards(deck.cards);
       this.round = makeRound(players);
+      this.gameStatus = "NOT_STARTED";
     },
     start(trumps) {
       this.trumps = trumps;
       for (let i in players) {
+        players[i].loadCards(this.remaininigCards[i]);
         players[i].setTrumps(trumps);
       }
       this.round.start();

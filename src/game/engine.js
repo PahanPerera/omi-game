@@ -41,10 +41,11 @@ export const selectTrumps = (cards) => {
 
 export const getWinnerId = (cards, trumps, type) => {
   let winnerIndex = -1;
-  let maxTrumpCard = _.maxBy(cards, (card) =>
-    card.type === trumps ? card.value : 0
+  let maxTrumpCard = _.maxBy(
+    _.filter(cards, (card) => card.type === trumps),
+    (card) => card?.value
   );
-  if (maxTrumpCard > 0) {
+  if (maxTrumpCard) {
     winnerIndex = _.findIndex(
       cards,
       (card) => card.type === trumps && card.value === maxTrumpCard.value
@@ -58,6 +59,7 @@ export const getWinnerId = (cards, trumps, type) => {
       (card) => card.type === type && card.value === maxTypeCard.value
     );
   }
+  console.log(winnerIndex);
   return winnerIndex;
 };
 
